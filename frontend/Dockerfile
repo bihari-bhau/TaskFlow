@@ -20,9 +20,8 @@ FROM nginx:alpine
 # Copy built React app
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Custom nginx config for React Router support
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx config template (uses $PORT variable injected by Railway)
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 
-EXPOSE 80
-
+# nginx:alpine automatically runs envsubst on /etc/nginx/templates/*.template at startup
 CMD ["nginx", "-g", "daemon off;"]
