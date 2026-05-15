@@ -8,9 +8,9 @@ Usage:
     python seed.py
 
 Demo accounts created:
-    Admin : admin@taskflow.com   / admin123
-    Member: member@taskflow.com  / member123
-    Member: dev@taskflow.com     / dev123
+    Admin : admin@taskflow.io  / admin123
+    Member: member@taskflow.io  / member123
+    Member: dev@taskflow.io     / dev123
 """
 
 import os
@@ -44,7 +44,7 @@ def seed():
         existing = db.query(User).filter_by(email="admin@taskflow.com").first()
         if existing:
             print("\n⚠️  Database already seeded!")
-            print("   admin@taskflow.com already exists.")
+            print("   admin@taskflow.io already exists.")
             print("   To re-seed, delete the existing data first.\n")
             return
 
@@ -53,17 +53,17 @@ def seed():
         # ── Users ─────────────────────────────────────────────────────────────
         admin = User(
             name="Shubham Singh",
-            email="admin@taskflow.com",
+            email="admin@taskflow.io",
             hashed_password=hash_password("admin123")
         )
         member1 = User(
             name="Shreya Sharma",
-            email="member@taskflow.com",
+            email="member@taskflow.io",
             hashed_password=hash_password("member123")
         )
         member2 = User(
-            name="Rahul Verma",
-            email="dev@taskflow.com",
+            name="Dev User",
+            email="dev@taskflow.io",
             hashed_password=hash_password("dev123")
         )
 
