@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: taskflow-frontend
+    env: static
+    buildCommand: npm install --legacy-peer-deps && npm run build
+    staticPublishPath: ./build
+    envVars:
+      - key: REACT_APP_API_URL
+        sync: false        # Set manually: https://taskflow-backend.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html   # Enables React Router client-side routing

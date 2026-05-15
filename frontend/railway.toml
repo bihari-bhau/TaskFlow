@@ -1,0 +1,15 @@
+# railway.toml — Frontend (React + nginx)
+# Place this file at: frontend/railway.toml
+#
+# REACT_APP_API_URL must be set as a Railway environment variable
+# before the build runs — React bakes it into the bundle at build time.
+
+[build]
+builder        = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath    = "/"
+healthcheckTimeout = 120
+restartPolicyType  = "ON_FAILURE"
+restartPolicyMaxRetries = 5

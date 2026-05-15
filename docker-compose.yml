@@ -1,0 +1,75 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# TaskFlow — Full Stack Docker Setup
+# Includes: PostgreSQL + FastAPI Backend + React Frontend
+#
+# QUICK START:
+#   docker-compose up --build
+#
+# WITH AUTO SEED (demo data):
+#   SEED_DB=true docker-compose up --build
+#
+# CLEAN START (delete everything and rebuild):
+#   docker-compose down -v --rmi all && docker-compose up --build
+# ─────────────────────────────────────────────────────────────────────────────
+
+version: "3.9"
+
+services:
+
+  # ── PostgreSQL Database ────────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: taskflow_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow_secret
+      POSTGRES_DB: taskflow
+    ports:
+      - "5432:5432"          # expose locally if you want to inspect with pgAdmin
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # persist data between restarts
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskflow -d taskflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── FastAPI Backend ────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: taskflow_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://taskflow:taskflow_secret@db:5432/taskflow
+      SECRET_KEY: super-secret-jwt-key-change-in-production-32chars
+      SEED_DB: "true"          # set to "false" to skip demo data on startup
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy   # wait for postgres to be ready
+    volumes:
+      - ./backend:/app         # hot reload during development
+
+  # ── React Frontend ─────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: http://localhost:8000/api
+    container_name: taskflow_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"              # nginx serves on 80 inside, map to 3000 outside
+    depends_on:
+      - backend
+
+# ── Named Volumes ──────────────────────────────────────────────────────────
+volumes:
+  pgdata:
+    name: taskflow_pgdata      # named so it's easy to identify and delete
