@@ -1,8 +1,8 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database import engine, Base
-from routers import auth, projects, tasks, dashboard
+from backend.database import engine, Base
+from backend.routers import auth, projects, tasks, dashboard
 
 Base.metadata.create_all(bind=engine)
 

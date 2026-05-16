@@ -24,9 +24,9 @@ try:
 except ImportError:
     pass  # dotenv not installed, rely on actual env vars
 
-from database import engine, Base, SessionLocal
-from models import User, Project, ProjectMember, Task, RoleEnum, PriorityEnum, StatusEnum
-from auth_utils import hash_password
+from backend.database import engine, Base, SessionLocal
+from backend.models import User, Project, ProjectMember, Task, RoleEnum, PriorityEnum, StatusEnum
+from backend.auth_utils import hash_password
 
 
 def seed():
@@ -41,7 +41,7 @@ def seed():
 
     try:
         # ── Check if already seeded ──────────────────────────────────────────
-        existing = db.query(User).filter_by(email="admin@taskflow.com").first()
+        existing = db.query(User).filter_by(email="admin@taskflow.io").first()
         if existing:
             print("\n⚠️  Database already seeded!")
             print("   admin@taskflow.io already exists.")
@@ -231,9 +231,9 @@ def seed():
         print("  ┌─────────────────────────────────────────┐")
         print("  │  Role   │ Email                │ Password │")
         print("  ├─────────────────────────────────────────┤")
-        print("  │  Admin  │ admin@taskflow.com   │ admin123 │")
-        print("  │  Member │ member@taskflow.com  │ member123│")
-        print("  │  Member │ dev@taskflow.com     │ dev123   │")
+        print("  │  Admin  │ admin@taskflow.io   │ admin123 │")
+        print("  │  Member │ member@taskflow.io  │ member123│")
+        print("  │  Member │ dev@taskflow.io     │ dev123   │")
         print("  └─────────────────────────────────────────┘")
         print()
         print("  Projects seeded:")

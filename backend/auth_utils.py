@@ -6,14 +6,14 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from database import get_db
-import models
+from backend.database import get_db
+import backend.models as models
 
 SECRET_KEY = os.getenv("SECRET_KEY", "taskflow-dev-secret-key-CHANGE-IN-PRODUCTION-32chars")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 security = HTTPBearer()
 
 
@@ -27,6 +27,9 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
+    # Ensure 'sub' is a string per jose JWT claim expectations
+    if 'sub' in to_encode and not isinstance(to_encode['sub'], str):
+        to_encode['sub'] = str(to_encode['sub'])
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
