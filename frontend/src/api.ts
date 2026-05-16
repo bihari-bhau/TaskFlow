@@ -7,7 +7,7 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach JWT to every request
+// ── Attach JWT to every outgoing request ──────────────────────────────────────
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('taskflow_token');
   if (token) {
@@ -16,14 +16,30 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle auth errors globally
+// ── Handle 401 globally ───────────────────────────────────────────────────────
+//
+// DO NOT use window.location.href — it causes a hard page reload which
+// destroys all React state and creates an infinite redirect loop.
+//
+// Instead: dispatch a custom DOM event. AuthContext listens to it,
+// calls logout() which updates React state, and PrivateRoute
+// automatically redirects to /login with no reload needed.
+//
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('taskflow_token');
-      localStorage.removeItem('taskflow_user');
-      window.location.href = '/login';
+      // Skip auth routes — a 401 on /auth/login just means wrong password,
+      // it should NOT log the user out or redirect anywhere.
+      const url: string = error.config?.url ?? '';
+      const isAuthRoute =
+        url.includes('/auth/login') ||
+        url.includes('/auth/signup');
+
+      if (!isAuthRoute) {
+        // Soft logout — AuthContext handles state cleanup
+        window.dispatchEvent(new CustomEvent('taskflow:logout'));
+      }
     }
     return Promise.reject(error);
   }
