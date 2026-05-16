@@ -6,8 +6,8 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from backend.database import get_db
-import backend.models as models
+from database import get_db
+import models as models
 
 SECRET_KEY = os.getenv("SECRET_KEY", "taskflow-dev-secret-key-CHANGE-IN-PRODUCTION-32chars")
 ALGORITHM = "HS256"

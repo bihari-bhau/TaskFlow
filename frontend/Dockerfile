@@ -20,13 +20,17 @@ FROM nginx:alpine
 # Copy built React app
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Custom nginx config for React Router support
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Custom nginx config for React Router support (using templates for ${PORT})
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
-# Copy runtime entrypoint to inject environment into app
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+# Copy runtime entrypoint script to the official Nginx startup directory
+COPY docker-entrypoint.sh /docker-entrypoint.d/40-env-config.sh
+RUN chmod +x /docker-entrypoint.d/40-env-config.sh
 
-EXPOSE 80
+# Set default port for local Docker (Railway overrides this)
+ENV PORT=80
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+# Silence nginx "notice" logs so Railway doesn't flag them as [error]
+RUN sed -i 's/notice/error/g' /etc/nginx/nginx.conf
+
+CMD ["nginx", "-g", "daemon off;"]

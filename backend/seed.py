@@ -24,9 +24,9 @@ try:
 except ImportError:
     pass  # dotenv not installed, rely on actual env vars
 
-from backend.database import engine, Base, SessionLocal
-from backend.models import User, Project, ProjectMember, Task, RoleEnum, PriorityEnum, StatusEnum
-from backend.auth_utils import hash_password
+from database import engine, Base, SessionLocal
+from models import User, Project, ProjectMember, Task, RoleEnum, PriorityEnum, StatusEnum
+from auth_utils import hash_password
 
 
 def seed():

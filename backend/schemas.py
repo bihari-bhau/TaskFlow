@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional, List
 from datetime import datetime
-from backend.models import RoleEnum, PriorityEnum, StatusEnum
+from models import RoleEnum, PriorityEnum, StatusEnum
 
 
 # ─── Auth ────────────────────────────────────────────────────────────────────
