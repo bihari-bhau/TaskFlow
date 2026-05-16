@@ -5,9 +5,9 @@ A full-stack team task management application with JWT authentication, role-base
 **Deployed with: Supabase (PostgreSQL) + Railway (hosting)**
 
 ## Live Demo
-- **Frontend:** `https://vibrant-inspiration-production-f24a.up.railway.app`
-- **Backend API:** *(Your Railway backend URL)*
-- **Swagger Docs:** *(Your Railway backend URL)*`/docs`
+- **Frontend:** `vibrant-inspiration-production-f24a.up.railway.app`
+- **Backend API:** taskflow-production-8281.up.railway.app
+- **Swagger Docs:** taskflow-production-8281.up.railway.app`/docs`
 
 ---
 
@@ -94,7 +94,7 @@ Both frontend and backend are deployed as separate Railway services using Docker
 ```
 DATABASE_URL  = postgresql://postgres:YOUR-PASSWORD@db.XXXX.supabase.co:5432/postgres
 SECRET_KEY    = (generate a long random string)
-ALLOWED_ORIGINS = https://your-frontend.up.railway.app
+ALLOWED_ORIGINS = vibrant-inspiration-production-f24a.up.railway.app
 ```
 
 ---
@@ -107,7 +107,7 @@ ALLOWED_ORIGINS = https://your-frontend.up.railway.app
 
 **Environment Variables to set in Railway:**
 ```
-REACT_APP_API_URL = https://your-backend.up.railway.app/api
+REACT_APP_API_URL = taskflow-production-e0f3.up.railway.app
 ```
 
 > **Note:** The frontend uses runtime environment injection via `docker-entrypoint.sh`.
