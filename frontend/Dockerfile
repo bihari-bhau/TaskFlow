@@ -23,6 +23,10 @@ COPY --from=build /app/build /usr/share/nginx/html
 # Custom nginx config for React Router support
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copy runtime entrypoint to inject environment into app
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
