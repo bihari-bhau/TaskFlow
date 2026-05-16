@@ -8,14 +8,14 @@ import { useAuth } from '../AuthContext';
 import { Project } from '../types';
 
 const ProjectsPage = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user }   = useAuth();
+  const navigate   = useNavigate();
+  const [projects, setProjects]   = useState<Project[]>([]);
+  const [loading,  setLoading]    = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [name, setName] = useState('');
-  const [desc, setDesc] = useState('');
-  const [creating, setCreating] = useState(false);
+  const [name,     setName]       = useState('');
+  const [desc,     setDesc]       = useState('');
+  const [creating, setCreating]   = useState(false);
   const [formError, setFormError] = useState('');
 
   const loadProjects = () => {
@@ -37,7 +37,7 @@ const ProjectsPage = () => {
     setFormError('');
     try {
       await api.post('/projects', { name: name.trim(), description: desc.trim() || undefined });
-      toast.success('Project created successfully!');
+      toast.success('Project created!');
       setShowModal(false);
       setName(''); setDesc('');
       loadProjects();
@@ -48,13 +48,18 @@ const ProjectsPage = () => {
   };
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, gap: 12, color: 'var(--text2)' }}>
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      height: 300, gap: 12,
+      fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, color: '#9a7a60',
+    }}>
       <span className="spinner" /> Loading projects…
     </div>
   );
 
   return (
     <div>
+      {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="page-header">
         <div>
           <div className="page-title">Projects</div>
@@ -63,14 +68,15 @@ const ProjectsPage = () => {
           </div>
         </div>
         <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-          <Plus size={16} /> New Project
+          <Plus size={15} strokeWidth={2.5} /> New Project
         </button>
       </div>
 
+      {/* ── Empty state ──────────────────────────────────────────────────── */}
       {projects.length === 0 ? (
         <div className="card">
           <div className="empty-state">
-            <FolderKanban size={52} />
+            <FolderKanban size={48} strokeWidth={1.5} />
             <h3>No projects yet</h3>
             <p>Create your first project to start managing tasks with your team.</p>
             <button className="btn btn-primary" onClick={() => setShowModal(true)} style={{ marginTop: 4 }}>
@@ -79,10 +85,10 @@ const ProjectsPage = () => {
           </div>
         </div>
       ) : (
+        /* ── Project grid ────────────────────────────────────────────────── */
         <div className="grid-auto">
           {projects.map(p => {
             const role = getMyRole(p);
-            const taskCount = 0; // shown after navigation
             return (
               <div
                 key={p.id}
@@ -90,33 +96,71 @@ const ProjectsPage = () => {
                 style={{ cursor: 'pointer' }}
                 onClick={() => navigate(`/projects/${p.id}`)}
               >
-                {/* Header */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+                {/* Card header */}
+                <div style={{
+                  display: 'flex', alignItems: 'flex-start',
+                  justifyContent: 'space-between', gap: 12, marginBottom: 12,
+                }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-                    <div style={{ background: 'rgba(99,102,241,0.12)', borderRadius: 10, padding: 9, display: 'flex', flexShrink: 0 }}>
-                      <FolderKanban size={18} color="var(--accent2)" />
+                    {/* Icon — copper bg, zero radius */}
+                    <div style={{
+                      background: 'rgba(185,75,16,0.1)',
+                      border: '2px solid rgba(185,75,16,0.25)',
+                      borderRadius: 0,
+                      padding: 9,
+                      display: 'flex',
+                      flexShrink: 0,
+                    }}>
+                      <FolderKanban size={17} color="#b94b10" strokeWidth={2.2} />
                     </div>
-                    <span style={{ fontWeight: 800, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+                    <span style={{
+                      fontFamily: "'Archivo', sans-serif",
+                      fontWeight: 800, fontSize: 14,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      color: '#1a1207',
+                    }}>
+                      {p.name}
+                    </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                    <span className={`badge badge-${role}`}>{role}</span>
-                    <ChevronRight size={16} color="var(--text3)" />
+                    {role && <span className={`badge badge-${role}`}>{role}</span>}
+                    <ChevronRight size={15} color="#9a7a60" />
                   </div>
                 </div>
 
+                {/* Description */}
                 {p.description && (
-                  <p style={{ color: 'var(--text2)', fontSize: 13, lineHeight: 1.5, marginBottom: 16, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  <p style={{
+                    color: '#5a3d25', fontSize: 13, lineHeight: 1.55, marginBottom: 16,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}>
                     {p.description}
                   </p>
                 )}
 
-                {/* Footer */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 14, borderTop: '1px solid var(--border)', marginTop: p.description ? 0 : 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text2)', fontSize: 12 }}>
-                    <Users size={13} />
+                {/* Card footer */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  paddingTop: 12,
+                  borderTop: '2px solid rgba(26,18,7,0.12)',
+                  marginTop: p.description ? 0 : 8,
+                }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    color: '#9a7a60', fontSize: 11,
+                  }}>
+                    <Users size={12} strokeWidth={2} />
                     {p.members.length} member{p.members.length !== 1 ? 's' : ''}
                   </div>
-                  <span style={{ color: 'var(--text3)', fontSize: 11 }}>
+                  <span style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    color: '#9a7a60', fontSize: 10,
+                    letterSpacing: '0.04em',
+                  }}>
                     {formatDistanceToNow(new Date(p.created_at), { addSuffix: true })}
                   </span>
                 </div>
@@ -126,20 +170,24 @@ const ProjectsPage = () => {
         </div>
       )}
 
-      {/* Create Project Modal */}
+      {/* ── Create Project Modal ─────────────────────────────────────────── */}
       {showModal && (
         <div className="modal-backdrop" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <span className="modal-title">New Project</span>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowModal(false)} style={{ padding: 6 }}>
-                <X size={18} />
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowModal(false)}
+                style={{ padding: 6 }}
+              >
+                <X size={17} />
               </button>
             </div>
 
             {formError && (
               <div className="alert alert-error" style={{ marginBottom: 20 }}>
-                <AlertCircle size={15} style={{ flexShrink: 0 }} />
+                <AlertCircle size={14} style={{ flexShrink: 0 }} />
                 {formError}
               </div>
             )}
@@ -148,21 +196,31 @@ const ProjectsPage = () => {
               <div className="form-group">
                 <label>Project Name *</label>
                 <input
-                  value={name} onChange={e => setName(e.target.value)}
+                  value={name}
+                  onChange={e => setName(e.target.value)}
                   placeholder="e.g. Q3 Product Launch"
-                  required autoFocus
+                  required
+                  autoFocus
                 />
               </div>
               <div className="form-group">
                 <label>Description</label>
                 <textarea
-                  value={desc} onChange={e => setDesc(e.target.value)}
+                  value={desc}
+                  onChange={e => setDesc(e.target.value)}
                   placeholder="What is this project about?"
-                  rows={3} style={{ resize: 'vertical' }}
+                  rows={3}
+                  style={{ resize: 'vertical' }}
                 />
               </div>
               <div className="form-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancel
+                </button>
                 <button type="submit" className="btn btn-primary" disabled={creating}>
                   {creating ? <span className="spinner" /> : <Plus size={14} />}
                   Create Project
