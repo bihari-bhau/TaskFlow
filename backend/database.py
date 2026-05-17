@@ -10,16 +10,16 @@ try:
 except ImportError:
     pass
 
-# Supabase provides a standard PostgreSQL connection string
-# For local dev, falls back to SQLite (no setup needed)
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./taskflow.db")
+# Prefer Railway's provided URL, fall back to generic DATABASE_URL, then to SQLite for dev
+DATABASE_URL = os.getenv("RAILWAY_DATABASE_URL", os.getenv("DATABASE_URL", "sqlite:///./taskflow.db"))
 
-# Supabase / some providers use postgres:// — SQLAlchemy needs postgresql://
+# Some providers (postgres://) use the legacy scheme — SQLAlchemy prefers postgresql://
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# Supabase requires SSL — add sslmode=require if not already present
-if "supabase" in DATABASE_URL and "sslmode" not in DATABASE_URL:
+# Ensure SSL for managed Postgres providers when not explicitly set
+# (works for Railway and other hosted Postgres providers)
+if DATABASE_URL.startswith("postgresql://") and "sslmode" not in DATABASE_URL:
     if "?" in DATABASE_URL:
         DATABASE_URL += "&sslmode=require"
     else:
@@ -27,13 +27,14 @@ if "supabase" in DATABASE_URL and "sslmode" not in DATABASE_URL:
 
 connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
 
-# Connection pool settings (recommended for PostgreSQL/Supabase)
+# Connection pool settings (recommended for hosted PostgreSQL)
 pool_kwargs = {}
 if "sqlite" not in DATABASE_URL:
+    pool_size = int(os.getenv("PG_POOL_SIZE", "5"))
     pool_kwargs = {
-        "pool_pre_ping": True,       # Verify connection before using from pool
-        "pool_recycle": 300,         # Recycle connections every 5 minutes
-        "pool_size": 5,              # Max 5 persistent connections (Supabase free tier limit)
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+        "pool_size": pool_size,
         "max_overflow": 10,
     }
 

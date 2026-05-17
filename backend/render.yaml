@@ -6,6 +6,6 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
-        sync: false        # Set manually in Render dashboard (your Supabase URL)
+        sync: false        # Set manually in Render dashboard (your Railway Postgres URL)
       - key: SECRET_KEY
         generateValue: true  # Render auto-generates a secure random value

@@ -2,7 +2,7 @@
 
 A full-stack team task management application with JWT authentication, role-based access control (Admin/Member), Kanban board, and analytics dashboard.
 
-**Deployed with: Supabase (PostgreSQL) + Railway (hosting)**
+**Deployed with: Railway Postgres (PostgreSQL) + Railway (hosting)**
 
 ## Live Demo
 - **Frontend:** `vibrant-inspiration-production-f24a.up.railway.app`
@@ -17,7 +17,7 @@ A full-stack team task management application with JWT authentication, role-base
 |------------|-----------------------------------------------------|
 | Frontend   | React 18, TypeScript, React Router v6, Recharts     |
 | Backend    | FastAPI (Python 3.11), SQLAlchemy ORM               |
-| Database   | Supabase (PostgreSQL) — SQLite for local dev        |
+| Database   | Railway Postgres (PostgreSQL) — SQLite for local dev |
 | Auth       | JWT (python-jose) + bcrypt (passlib)                |
 | Hosting    | Railway (backend + frontend via Docker + Nginx)     |
 
@@ -92,7 +92,7 @@ Both frontend and backend are deployed as separate Railway services using Docker
 
 **Environment Variables to set in Railway:**
 ```
-DATABASE_URL  = postgresql://postgres:YOUR-PASSWORD@db.XXXX.supabase.co:5432/postgres
+DATABASE_URL  = postgresql://postgres:YOUR-PASSWORD@containers-XXXX.railway.app:5432/railway
 SECRET_KEY    = (generate a long random string)
 ALLOWED_ORIGINS = vibrant-inspiration-production-f24a.up.railway.app
 ```
@@ -131,7 +131,7 @@ REACT_APP_API_URL = taskflow-production-e0f3.up.railway.app
 ### Backend
 | Variable          | Description                                    | Local Default             |
 |-------------------|------------------------------------------------|---------------------------|
-| `DATABASE_URL`    | Supabase PostgreSQL connection URI             | `sqlite:///./taskflow.db` |
+| `DATABASE_URL`    | Railway PostgreSQL connection URI             | `sqlite:///./taskflow.db` |
 | `SECRET_KEY`      | JWT signing secret (32+ chars, keep private)  | Dev fallback (change!)    |
 | `ALLOWED_ORIGINS` | Comma-separated list of allowed frontend URLs | `http://localhost:3000`   |
 
@@ -184,7 +184,7 @@ REACT_APP_API_URL = taskflow-production-e0f3.up.railway.app
 taskflow/
 ├── backend/
 │   ├── main.py              # FastAPI app, CORS, router registration
-│   ├── database.py          # SQLAlchemy — Supabase/PostgreSQL or SQLite
+│   ├── database.py          # SQLAlchemy — PostgreSQL or SQLite
 │   ├── models.py            # User, Project, ProjectMember, Task
 │   ├── schemas.py           # Pydantic v2 validation schemas
 │   ├── auth_utils.py        # JWT + bcrypt + get_current_user dependency
