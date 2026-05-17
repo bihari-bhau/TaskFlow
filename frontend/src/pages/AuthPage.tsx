@@ -476,10 +476,17 @@ const AuthPage = () => {
       }
       navigate('/');
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { detail?: unknown } } })
-          ?.response?.data?.detail ?? 'Something went wrong. Please try again.';
-      setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      const e = err as { response?: { data?: { detail?: unknown } } };
+      let errorMsg = 'Something went wrong. Please try again.';
+      if (!e.response) {
+        errorMsg = 'Network Error: Cannot reach the backend. Check CORS and REACT_APP_API_URL.';
+      } else if (typeof e.response.data === 'string') {
+        errorMsg = `Server Error: ${e.response.data}`;
+      } else if (e.response.data?.detail) {
+        errorMsg = typeof e.response.data.detail === 'string' ? e.response.data.detail : JSON.stringify(e.response.data.detail);
+      }
+      toast.error(errorMsg);
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
