@@ -16,5 +16,3 @@ if [ -f "$INDEX_HTML" ]; then
 		sed -i "s|</head>|  <script src=\"/env-config.js\"></script>\n</head>|" "$INDEX_HTML"
 	fi
 fi
-
-exec nginx -g 'daemon off;'

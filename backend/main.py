@@ -1,8 +1,8 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.database import engine, Base
-from backend.routers import auth, projects, tasks, dashboard
+from database import engine, Base
+from routers import auth, projects, tasks, dashboard
 
 Base.metadata.create_all(bind=engine)
 
@@ -12,28 +12,10 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# ── CORS ─────────────────────────────────────────────────────────────────────
-#
-# WHY NOT allow_origins=["*"] + allow_credentials=True ?
-# The CORS spec forbids it. Browsers will block every request with:
-#   "The value of 'Access-Control-Allow-Origin' is '*'
-#    but 'Access-Control-Allow-Credentials' is true."
-#
-# FIX: List origins explicitly so credentials can be included.
-#
-# Local dev  → ALLOWED_ORIGINS not set → defaults to localhost:3000
-# Production → set ALLOWED_ORIGINS=https://yourapp.up.railway.app in Railway
-
-_raw = os.getenv(
-    "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000"
-)
-ALLOWED_ORIGINS = [o.strip() for o in _raw.split(",") if o.strip()]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,   # explicit list, never "*"
-    allow_credentials=True,
+    allow_origins=["*"],             # Allow any frontend URL to connect
+    allow_credentials=False,         # Not needed since we use JWT Bearer tokens, not cookies
     allow_methods=["*"],
     allow_headers=["*"],
 )
