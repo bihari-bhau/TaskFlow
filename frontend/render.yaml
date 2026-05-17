@@ -6,7 +6,9 @@ services:
     staticPublishPath: ./build
     envVars:
       - key: REACT_APP_API_URL
-        sync: false        # Set manually: https://taskflow-backend.onrender.com/api
+        sync: false        # Set manually: http://localhost:8000/api (for browser fallback)
+      - key: BACKEND_API_URL
+        sync: false        # Set manually: https://taskflow-backend.onrender.com (for nginx proxy)
     routes:
       - type: rewrite
         source: /*

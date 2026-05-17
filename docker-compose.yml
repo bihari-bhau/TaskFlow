@@ -64,6 +64,9 @@ services:
         REACT_APP_API_URL: http://localhost:8000/api
     container_name: taskflow_frontend
     restart: unless-stopped
+    environment:
+      BACKEND_API_URL: http://backend:8000   # For nginx proxy (Docker network)
+      REACT_APP_API_URL: http://localhost:8000/api  # For browser fallback
     ports:
       - "3000:80"              # nginx serves on 80 inside, map to 3000 outside
     depends_on:
