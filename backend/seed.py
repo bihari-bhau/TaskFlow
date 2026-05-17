@@ -30,11 +30,11 @@ from auth_utils import hash_password
 
 
 def seed():
-    print("\n🌱 TaskFlow Seed Script")
+    print("\n[+] TaskFlow Seed Script")
     print("=" * 40)
 
     # Create all tables (safe to run even if already exist)
-    print("📦 Creating tables if not exist...")
+    print("[*] Creating tables if not exist...")
     Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()
@@ -43,12 +43,12 @@ def seed():
         # ── Check if already seeded ──────────────────────────────────────────
         existing = db.query(User).filter_by(email="admin@taskflow.io").first()
         if existing:
-            print("\n⚠️  Database already seeded!")
+            print("\n[!] Database already seeded!")
             print("   admin@taskflow.io already exists.")
             print("   To re-seed, delete the existing data first.\n")
             return
 
-        print("👤 Creating demo users...")
+        print("[-] Creating demo users...")
 
         # ── Users ─────────────────────────────────────────────────────────────
         admin = User(
@@ -70,12 +70,12 @@ def seed():
         db.add_all([admin, member1, member2])
         db.flush()  # Get IDs without committing
 
-        print(f"   ✅ {admin.name} ({admin.email}) — Admin")
-        print(f"   ✅ {member1.name} ({member1.email}) — Member")
-        print(f"   ✅ {member2.name} ({member2.email}) — Member")
+        print(f"   [OK] {admin.name} ({admin.email}) — Admin")
+        print(f"   [OK] {member1.name} ({member1.email}) — Member")
+        print(f"   [OK] {member2.name} ({member2.email}) — Member")
 
         # ── Projects ──────────────────────────────────────────────────────────
-        print("\n📁 Creating demo projects...")
+        print("\n[-] Creating demo projects...")
 
         now = datetime.now(timezone.utc)
 
@@ -93,11 +93,11 @@ def seed():
         db.add_all([project1, project2])
         db.flush()
 
-        print(f"   ✅ {project1.name}")
-        print(f"   ✅ {project2.name}")
+        print(f"   [OK] {project1.name}")
+        print(f"   [OK] {project2.name}")
 
         # ── Members ───────────────────────────────────────────────────────────
-        print("\n👥 Adding project members...")
+        print("\n[-] Adding project members...")
 
         memberships = [
             # Project 1
@@ -110,10 +110,10 @@ def seed():
         ]
         db.add_all(memberships)
         db.flush()
-        print("   ✅ All memberships created")
+        print("   [OK] All memberships created")
 
         # ── Tasks ─────────────────────────────────────────────────────────────
-        print("\n📋 Creating demo tasks...")
+        print("\n[-] Creating demo tasks...")
 
         tasks = [
             # ── Project 1 tasks ──────────────────────────────────────────────
@@ -223,11 +223,11 @@ def seed():
         db.add_all(tasks)
         db.commit()
 
-        print(f"   ✅ {len(tasks)} tasks created across {2} projects")
+        print(f"   [OK] {len(tasks)} tasks created across {2} projects")
 
         # ── Summary ───────────────────────────────────────────────────────────
         print("\n" + "=" * 40)
-        print("✅ Seed complete! Demo accounts ready:\n")
+        print("[OK] Seed complete! Demo accounts ready:\n")
         print("  ┌─────────────────────────────────────────┐")
         print("  │  Role   │ Email                │ Password │")
         print("  ├─────────────────────────────────────────┤")
@@ -245,7 +245,7 @@ def seed():
 
     except Exception as e:
         db.rollback()
-        print(f"\n❌ Seed failed: {e}")
+        print(f"\n[X] Seed failed: {e}")
         raise
     finally:
         db.close()
