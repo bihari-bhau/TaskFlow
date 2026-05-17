@@ -8,7 +8,7 @@ services:
       - key: REACT_APP_API_URL
         sync: false        # Set manually: http://localhost:8000/api (for browser fallback)
       - key: BACKEND_API_URL
-        sync: false        # Set manually: https://taskflow-backend.onrender.com (for nginx proxy)
+        value: https://taskflow-production-8281.up.railway.app  # Nginx proxy to backend
     routes:
       - type: rewrite
         source: /*
