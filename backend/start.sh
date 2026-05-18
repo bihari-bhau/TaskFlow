@@ -7,7 +7,11 @@
 
 PORT=${PORT:-8000}
 
+echo "Seeding database..."PORT=${PORT:-8000}
 echo "Seeding database..."
+python seed.py   # seed.py already wipes and re-seeds every run now
+echo "Starting TaskFlow API on port $PORT..."
+exec uvicorn main:app --host 0.0.0.0 --port "$PORT"
 python seed.py
 
 echo "Starting TaskFlow API on port $PORT..."

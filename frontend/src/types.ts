@@ -1,44 +1,58 @@
-export interface User {
+// ─────────────────────────────────────────────────────────────────────────────
+// ADD these to your existing types.ts if not already present
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface UserOut {
   id: number;
   name: string;
   email: string;
   created_at: string;
 }
 
-export interface Member {
+export interface MemberOut {
   id: number;
   user_id: number;
   role: 'admin' | 'member';
-  user: User;
+  user: UserOut;
   joined_at: string;
 }
 
-export interface Project {
+export interface ProjectOut {
   id: number;
   name: string;
-  description?: string;
-  created_by?: number;
+  description: string | null;
+  created_by: number | null;
   created_at: string;
-  members: Member[];
+  members: MemberOut[];
 }
 
-export type Priority = 'low' | 'medium' | 'high';
-export type TaskStatus = 'todo' | 'in_progress' | 'done';
-
-export interface Task {
+export interface TaskOut {
   id: number;
   title: string;
-  description?: string;
-  due_date?: string;
-  priority: Priority;
-  status: TaskStatus;
+  description: string | null;
+  due_date: string | null;
+  priority: 'low' | 'medium' | 'high';
+  status: 'todo' | 'in_progress' | 'done';
   project_id: number;
-  assigned_to?: number;
-  created_by?: number;
+  assigned_to: number | null;
+  created_by: number | null;
   created_at: string;
   updated_at: string;
-  assignee?: User;
-  creator?: User;
+  assignee: UserOut | null;
+  creator: UserOut | null;
+}
+
+export interface TasksByStatus {
+  todo: number;
+  in_progress: number;
+  done: number;
+}
+
+export interface UserTaskCount {
+  user_id: number;
+  name: string;
+  email: string;
+  count: number;
 }
 
 export interface DashboardData {
@@ -46,22 +60,7 @@ export interface DashboardData {
   total_tasks: number;
   my_tasks: number;
   overdue_tasks: number;
+  tasks_by_status: TasksByStatus;
+  tasks_per_user: UserTaskCount[];
   completion_rate: number;
-  tasks_by_status: {
-    todo: number;
-    in_progress: number;
-    done: number;
-  };
-  tasks_per_user: {
-    user_id: number;
-    name: string;
-    email: string;
-    count: number;
-  }[];
-}
-
-export interface AuthResponse {
-  access_token: string;
-  token_type: string;
-  user: User;
 }

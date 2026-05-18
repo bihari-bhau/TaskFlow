@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Layers, LayoutDashboard, FolderKanban, LogOut, Menu, X } from 'lucide-react';
+import { Layers, LayoutDashboard, FolderKanban, Users, ClipboardList, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { to: '/projects', label: 'Projects', icon: FolderKanban, exact: false },
+  { to: '/',         label: 'Dashboard',         icon: LayoutDashboard, exact: true  },
+  { to: '/projects', label: 'Projects',           icon: FolderKanban,    exact: false },
+  { to: '/members',  label: 'Member Allocation',  icon: Users,           exact: false },
+  { to: '/pending',  label: 'Pending Tasks',      icon: ClipboardList,   exact: false },
 ];
 
 const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
