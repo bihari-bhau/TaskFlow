@@ -3,68 +3,137 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
   Tooltip, ResponsiveContainer,
 } from 'recharts';
-import { FolderKanban, TrendingUp, User, AlertTriangle } from 'lucide-react';
+import {
+  FolderKanban, TrendingUp, User, AlertTriangle,
+  CheckCircle2, Clock, Circle, Loader2, Activity,
+} from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../AuthContext';
-import { DashboardData } from '../types';
+import { DashboardData, ProjectOut, TaskOut } from '../types';
 
-// ── Copper Brutalist chart palette ────────────────────────────────────────────
-const STATUS_COLORS = [
-  '#9a7a60', // todo     — muted copper-brown
-  '#1a3a6b', // progress — deep navy
-  '#2d6a2d', // done     — forest green
-];
+// ── palette ───────────────────────────────────────────────────────────────────
+const C = {
+  copper:  '#b94b10',
+  navy:    '#1a3a6b',
+  green:   '#2d6a2d',
+  red:     '#991111',
+  muted:   '#9a7a60',
+  purple:  '#5a3a7a',
+  ink:     '#1a1207',
+  paper:   '#ede8e2',
+};
 
-// ── Recharts custom tooltip ───────────────────────────────────────────────────
+const STATUS_COLORS = [C.muted, C.navy, C.green];
+
+const mono: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
+const black: React.CSSProperties = { fontFamily: "'Archivo Black', sans-serif" };
+
+const formatDate = (iso: string | null) => {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
+const isOverdue = (due: string | null) => due ? new Date(due) < new Date() : false;
+
+// ── custom tooltip ─────────────────────────────────────────────────────────────
 const CustomTooltip = ({ active, payload, label }: any) =>
   active && payload?.length ? (
     <div style={{
-      background: '#ede8e2',
-      border: '2px solid rgba(26,18,7,0.38)',
-      borderRadius: 0,
-      padding: '8px 12px',
-      fontSize: 12,
-      fontFamily: "'IBM Plex Mono', monospace",
+      background: C.paper, border: `2px solid rgba(26,18,7,0.28)`,
+      padding: '8px 12px', fontSize: 12, ...mono,
       boxShadow: '3px 3px 0px rgba(26,18,7,0.14)',
     }}>
-      {label && (
-        <p style={{ color: '#5a3d25', marginBottom: 4, letterSpacing: '0.04em' }}>{label}</p>
-      )}
+      {label && <p style={{ color: C.muted, marginBottom: 4 }}>{label}</p>}
       {payload.map((p: any, i: number) => (
-        <p key={i} style={{ color: p.color || '#1a1207', fontWeight: 700 }}>
+        <p key={i} style={{ color: p.color || C.ink, fontWeight: 700 }}>
           {p.name}: {p.value}
         </p>
       ))}
     </div>
   ) : null;
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── stat card ─────────────────────────────────────────────────────────────────
+interface StatCardProps {
+  label: string; value: number | string;
+  icon: React.ElementType; color: string; sub?: string;
+}
+const StatCard = ({ label, value, icon: Icon, color, sub }: StatCardProps) => (
+  <div className="card" style={{
+    display: 'flex', alignItems: 'center', gap: 14,
+    boxShadow: '4px 4px 0px rgba(26,18,7,0.14)',
+    borderTop: `3px solid ${color}`,
+    padding: '16px 18px',
+  }}>
+    <div style={{
+      background: `${color}18`, border: `2px solid ${color}44`,
+      padding: 9, flexShrink: 0, display: 'flex',
+    }}>
+      <Icon size={18} color={color} strokeWidth={2.2} />
+    </div>
+    <div>
+      <div style={{ ...black, fontSize: 30, fontWeight: 900, color, lineHeight: 1 }}>
+        {value}
+      </div>
+      <div style={{ ...mono, color: C.muted, fontSize: 10, marginTop: 4, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        {label}
+      </div>
+      {sub && (
+        <div style={{ ...mono, color: C.muted, fontSize: 9, marginTop: 2, letterSpacing: '0.04em' }}>
+          {sub}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+// ── component ─────────────────────────────────────────────────────────────────
+interface TaskWithProject extends TaskOut { projectName: string }
+
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user }  = useAuth();
   const [data,    setData]    = useState<DashboardData | null>(null);
+  const [projects,setProjects]= useState<ProjectOut[]>([]);
+  const [overdue, setOverdue] = useState<TaskWithProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
 
   useEffect(() => {
-    api.get('/dashboard')
-      .then(r => setData(r.data))
-      .catch(() => setError('Failed to load dashboard data'))
+    Promise.all([
+      api.get<DashboardData>('/dashboard'),
+      api.get<ProjectOut[]>('/projects'),
+    ])
+      .then(async ([dRes, pRes]) => {
+        setData(dRes.data);
+        setProjects(pRes.data);
+
+        // Fetch tasks for all projects to build overdue list
+        const taskArrays = await Promise.all(
+          pRes.data.map(p =>
+            api.get<TaskOut[]>('/tasks', { params: { project_id: p.id } })
+              .then(r => r.data.map(t => ({ ...t, projectName: p.name })))
+              .catch(() => [] as TaskWithProject[])
+          )
+        );
+        const overdueList = taskArrays
+          .flat()
+          .filter(t => t.status !== 'done' && isOverdue(t.due_date ? String(t.due_date) : null))
+          .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''));
+        setOverdue(overdueList);
+      })
+      .catch(() => setError('Failed to load dashboard'))
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, gap: 12, color: '#5a3d25', fontFamily: "'IBM Plex Mono', monospace", fontSize: 13 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, gap: 12, color: C.muted, ...mono, fontSize: 13 }}>
       <span className="spinner" /> Loading dashboard…
     </div>
   );
-
   if (error) return (
     <div className="alert alert-error" style={{ maxWidth: 440 }}>
-      <AlertTriangle size={16} style={{ flexShrink: 0 }} />
-      {error}
+      <AlertTriangle size={16} style={{ flexShrink: 0 }} /> {error}
     </div>
   );
-
   if (!data) return null;
 
   const pieData = [
@@ -74,180 +143,101 @@ const Dashboard = () => {
   ].filter(d => d.value > 0);
 
   const barData = data.tasks_per_user.map(u => ({
-    name:  u.name.split(' ')[0],
+    name: u.name.split(' ')[0],
     tasks: u.count,
   }));
 
-  const statCards = [
-    {
-      label: 'Total Projects',
-      value: data.total_projects,
-      icon:  FolderKanban,
-      color: '#b94b10',                       // copper
-      bg:    'rgba(185,75,16,0.1)',
-      bd:    'rgba(185,75,16,0.28)',
-    },
-    {
-      label: 'Total Tasks',
-      value: data.total_tasks,
-      icon:  TrendingUp,
-      color: '#1a3a6b',                       // navy
-      bg:    'rgba(26,58,107,0.1)',
-      bd:    'rgba(26,58,107,0.28)',
-    },
-    {
-      label: 'My Tasks',
-      value: data.my_tasks,
-      icon:  User,
-      color: '#2d6a2d',                       // forest green
-      bg:    'rgba(45,106,45,0.1)',
-      bd:    'rgba(45,106,45,0.28)',
-    },
-    {
-      label: 'Overdue',
-      value: data.overdue_tasks,
-      icon:  AlertTriangle,
-      color: data.overdue_tasks > 0 ? '#991111' : '#9a7a60',
-      bg:    data.overdue_tasks > 0 ? 'rgba(153,17,17,0.08)' : 'rgba(26,18,7,0.05)',
-      bd:    data.overdue_tasks > 0 ? 'rgba(153,17,17,0.28)' : 'rgba(26,18,7,0.18)',
-    },
-  ];
-
-  const legendItems = [
-    { label: 'To Do',       color: STATUS_COLORS[0], val: data.tasks_by_status.todo },
-    { label: 'In Progress', color: STATUS_COLORS[1], val: data.tasks_by_status.in_progress },
-    { label: 'Done',        color: STATUS_COLORS[2], val: data.tasks_by_status.done },
-  ];
+  // Project health: completion % per project
+  const projectHealth = projects.map((p, i) => {
+    const colors = [C.copper, C.navy, C.green, C.purple];
+    return { name: p.name, members: p.members.length, color: colors[i % 4] };
+  });
 
   return (
     <div>
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="page-header">
+      <div className="page-header" style={{ marginBottom: 24 }}>
         <div>
           <div className="page-title">Dashboard</div>
           <div className="page-subtitle">
-            Welcome back, {user?.name?.split(' ')[0]} — here's your team overview
+            Welcome back, <strong>{user?.name?.split(' ')[0]}</strong> — here's your team overview
           </div>
+        </div>
+        {/* Live indicator */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          ...mono, fontSize: 10, color: C.green, letterSpacing: '0.08em',
+          border: `1px solid ${C.green}44`, padding: '6px 12px',
+        }}>
+          <div style={{
+            width: 6, height: 6, borderRadius: '50%', background: C.green,
+            animation: 'pulse 2s infinite',
+          }} />
+          LIVE
         </div>
       </div>
 
-      {/* ── Stat cards ──────────────────────────────────────────────────── */}
-      <div className="grid-4" style={{ marginBottom: 24 }}>
-        {statCards.map(s => (
-          <div
-            key={s.label}
-            className="card"
-            style={{ display: 'flex', alignItems: 'center', gap: 16, boxShadow: '4px 4px 0px rgba(26,18,7,0.14)' }}
-          >
-            <div style={{
-              background: s.bg,
-              border: `2px solid ${s.bd}`,
-              borderRadius: 0,
-              padding: 10,
-              flexShrink: 0,
-              display: 'flex',
-            }}>
-              <s.icon size={20} color={s.color} strokeWidth={2.2} />
-            </div>
-            <div>
-              <div style={{
-                fontSize: 32,
-                fontFamily: "'Archivo Black', sans-serif",
-                fontWeight: 900,
-                color: s.color,
-                lineHeight: 1,
-              }}>
-                {s.value}
-              </div>
-              <div style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                color: '#9a7a60',
-                fontSize: 10,
-                marginTop: 5,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-              }}>
-                {s.label}
-              </div>
-            </div>
-          </div>
-        ))}
+      {/* ── 6 Stat cards ─────────────────────────────────────────────────── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+        gap: 16, marginBottom: 24,
+      }}>
+        <StatCard label="Total Tasks"  value={data.total_tasks}                     icon={TrendingUp}   color={C.navy}   />
+        <StatCard label="To Do"        value={data.tasks_by_status.todo}            icon={Circle}       color={C.muted}  />
+        <StatCard label="In Progress"  value={data.tasks_by_status.in_progress}     icon={Loader2}      color={C.copper} />
+        <StatCard label="Completed"    value={data.tasks_by_status.done}            icon={CheckCircle2} color={C.green}  />
+        <StatCard label="Overdue"      value={data.overdue_tasks}                   icon={AlertTriangle}color={data.overdue_tasks > 0 ? C.red : C.muted} />
+        <StatCard label="My Tasks"     value={data.my_tasks}                        icon={User}         color={C.purple} sub={`${data.completion_rate}% complete`} />
       </div>
 
-      {/* ── Charts ──────────────────────────────────────────────────────── */}
-      <div className="grid-2" style={{ marginBottom: 20 }}>
+      {/* ── Charts row ───────────────────────────────────────────────────── */}
+      <div className="grid-2" style={{ marginBottom: 24 }}>
 
-        {/* Status distribution */}
+        {/* Pie: status breakdown */}
         <div className="card" style={{ boxShadow: '4px 4px 0px rgba(26,18,7,0.14)' }}>
-          <div style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: '#9a7a60',
-            marginBottom: 20,
-          }}>
+          <div style={{ ...mono, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, marginBottom: 20 }}>
             // Tasks by Status
           </div>
-
           {pieData.length === 0 ? (
-            <div className="empty-state" style={{ padding: '30px 0' }}>
-              <p>No tasks yet</p>
-            </div>
+            <div className="empty-state" style={{ padding: '30px 0' }}><p>No tasks yet</p></div>
           ) : (
             <>
-              <ResponsiveContainer width="100%" height={180}>
+              <ResponsiveContainer width="100%" height={160}>
                 <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%" cy="50%"
-                    innerRadius={50} outerRadius={80}
-                    paddingAngle={3} dataKey="value"
-                    strokeWidth={0}
-                  >
-                    {pieData.map((_, i) => (
-                      <Cell key={i} fill={STATUS_COLORS[i]} />
-                    ))}
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={45} outerRadius={72}
+                    paddingAngle={3} dataKey="value" strokeWidth={0}>
+                    {pieData.map((_, i) => <Cell key={i} fill={STATUS_COLORS[i]} />)}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
 
               {/* Completion rate */}
-              <div style={{ textAlign: 'center', marginTop: 4, marginBottom: 16 }}>
-                <div style={{
-                  fontFamily: "'Archivo Black', sans-serif",
-                  fontSize: 36,
-                  fontWeight: 900,
-                  color: '#2d6a2d',
-                  lineHeight: 1,
-                }}>
-                  {data.completion_rate}
-                  <span style={{ fontSize: 20 }}>%</span>
+              <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                <div style={{ ...black, fontSize: 40, fontWeight: 900, color: C.green, lineHeight: 1 }}>
+                  {data.completion_rate}<span style={{ fontSize: 20 }}>%</span>
                 </div>
-                <div style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  color: '#9a7a60',
-                  fontSize: 10,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  marginTop: 4,
-                }}>
+                <div style={{ ...mono, color: C.muted, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 4 }}>
                   Completion Rate
                 </div>
               </div>
 
+              {/* Progress bar */}
+              <div style={{ background: 'rgba(26,18,7,0.06)', border: '1px solid rgba(26,18,7,0.12)', height: 8, marginBottom: 14 }}>
+                <div style={{ height: '100%', width: `${data.completion_rate}%`, background: C.green, transition: 'width 0.6s ease' }} />
+              </div>
+
               {/* Legend */}
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 18, flexWrap: 'wrap' }}>
-                {legendItems.map(s => (
-                  <div key={s.label} style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: 11, color: '#5a3d25',
-                  }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
+                {[
+                  { label: 'Todo',     color: STATUS_COLORS[0], val: data.tasks_by_status.todo        },
+                  { label: 'Progress', color: STATUS_COLORS[1], val: data.tasks_by_status.in_progress },
+                  { label: 'Done',     color: STATUS_COLORS[2], val: data.tasks_by_status.done        },
+                ].map(s => (
+                  <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 6, ...mono, fontSize: 11, color: '#5a3d25' }}>
                     <div style={{ width: 8, height: 8, background: s.color, flexShrink: 0 }} />
-                    {s.label}: <strong style={{ color: '#1a1207' }}>{s.val}</strong>
+                    {s.label}: <strong style={{ color: C.ink }}>{s.val}</strong>
                   </div>
                 ))}
               </div>
@@ -255,64 +245,157 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Tasks per team member */}
+        {/* Bar: tasks per member */}
         <div className="card" style={{ boxShadow: '4px 4px 0px rgba(26,18,7,0.14)' }}>
-          <div style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: '#9a7a60',
-            marginBottom: 20,
-          }}>
+          <div style={{ ...mono, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, marginBottom: 20 }}>
             // Tasks per Member
           </div>
-
           {barData.length === 0 ? (
-            <div className="empty-state" style={{ padding: '30px 0' }}>
-              <p>No assigned tasks yet</p>
-            </div>
+            <div className="empty-state" style={{ padding: '30px 0' }}><p>No assigned tasks</p></div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={barData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <XAxis
-                  dataKey="name"
-                  tick={{ fill: '#9a7a60', fontSize: 11, fontFamily: "'IBM Plex Mono', monospace" }}
-                  axisLine={{ stroke: 'rgba(26,18,7,0.18)' }}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fill: '#9a7a60', fontSize: 11, fontFamily: "'IBM Plex Mono', monospace" }}
-                  axisLine={false}
-                  tickLine={false}
-                  allowDecimals={false}
-                />
-                <Tooltip
-                  content={<CustomTooltip />}
-                  cursor={{ fill: 'rgba(185,75,16,0.06)' }}
-                />
-                <Bar
-                  dataKey="tasks"
-                  name="Tasks"
-                  fill="#b94b10"
-                  radius={[0, 0, 0, 0]}
-                />
+                <XAxis dataKey="name" tick={{ fill: C.muted, fontSize: 11, fontFamily: "'IBM Plex Mono', monospace" }}
+                  axisLine={{ stroke: 'rgba(26,18,7,0.18)' }} tickLine={false} />
+                <YAxis tick={{ fill: C.muted, fontSize: 11, fontFamily: "'IBM Plex Mono', monospace" }}
+                  axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(185,75,16,0.06)' }} />
+                <Bar dataKey="tasks" name="Tasks" fill={C.copper} radius={[0, 0, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
       </div>
 
-      {/* ── Overdue alert ────────────────────────────────────────────────── */}
-      {data.overdue_tasks > 0 && (
-        <div className="alert alert-error">
-          <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
-          <div>
-            <strong style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
-              {data.overdue_tasks} task{data.overdue_tasks !== 1 ? 's are' : ' is'} overdue.
-            </strong>
-            {' '}Go to your projects and update them to stay on track.
+      {/* ── Project overview ──────────────────────────────────────────────── */}
+      {projectHealth.length > 0 && (
+        <div className="card" style={{ boxShadow: '4px 4px 0px rgba(26,18,7,0.14)', marginBottom: 24 }}>
+          <div style={{ ...mono, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Activity size={12} /> // Project Overview
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 16,
+          }}>
+            {projectHealth.map(p => (
+              <div key={p.name} style={{
+                border: `2px solid ${p.color}28`,
+                padding: '14px 16px',
+                borderLeft: `4px solid ${p.color}`,
+              }}>
+                <div style={{ ...black, fontSize: 16, fontWeight: 900, color: p.color, marginBottom: 8 }}>
+                  {p.name}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ ...mono, fontSize: 10, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Members
+                  </span>
+                  <span style={{ ...black, fontSize: 18, fontWeight: 900, color: p.color }}>
+                    {p.members}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Overdue tasks list ────────────────────────────────────────────── */}
+      {overdue.length > 0 && (
+        <div className="card" style={{ boxShadow: '4px 4px 0px rgba(153,17,17,0.20)', borderTop: `3px solid ${C.red}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ ...mono, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.red, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <AlertTriangle size={12} /> // Overdue Tasks — {overdue.length} pending
+            </div>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid rgba(153,17,17,0.15)' }}>
+                  {['Task', 'Project', 'Assignee', 'Priority', 'Due Date'].map(h => (
+                    <th key={h} style={{
+                      ...mono, fontSize: 10, fontWeight: 700,
+                      letterSpacing: '0.1em', textTransform: 'uppercase',
+                      color: C.muted, textAlign: 'left', padding: '0 12px 10px 0',
+                    }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {overdue.map((task, i) => {
+                  const priorityColor = task.priority === 'high' ? C.red : task.priority === 'medium' ? C.copper : C.muted;
+                  return (
+                    <tr key={task.id} style={{
+                      borderBottom: i < overdue.length - 1 ? '1px solid rgba(26,18,7,0.06)' : 'none',
+                      background: i % 2 === 0 ? 'rgba(153,17,17,0.02)' : 'transparent',
+                    }}>
+                      <td style={{ padding: '10px 12px 10px 0' }}>
+                        <div style={{ ...black, fontSize: 13, fontWeight: 900, color: C.ink }}>
+                          {task.title}
+                        </div>
+                        {task.description && (
+                          <div style={{ ...mono, fontSize: 10, color: C.muted, marginTop: 2 }}>
+                            {task.description.length > 50 ? task.description.slice(0, 50) + '…' : task.description}
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ padding: '10px 12px 10px 0' }}>
+                        <span style={{
+                          ...mono, fontSize: 10, fontWeight: 700,
+                          color: C.navy, background: 'rgba(26,58,107,0.08)',
+                          border: '1px solid rgba(26,58,107,0.24)', padding: '3px 8px',
+                        }}>
+                          {task.projectName}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 12px 10px 0' }}>
+                        {task.assignee ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div style={{
+                              width: 22, height: 22, background: 'rgba(26,18,7,0.12)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              flexShrink: 0,
+                            }}>
+                              <span style={{ ...black, fontSize: 10, fontWeight: 900, color: '#5a3d25' }}>
+                                {task.assignee.name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <span style={{ ...mono, fontSize: 11, color: '#5a3d25' }}>
+                              {task.assignee.name.split(' ')[0]}
+                            </span>
+                          </div>
+                        ) : (
+                          <span style={{ ...mono, fontSize: 11, color: C.muted }}>Unassigned</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '10px 12px 10px 0' }}>
+                        <span style={{
+                          ...mono, fontSize: 10, fontWeight: 700,
+                          letterSpacing: '0.08em', textTransform: 'uppercase',
+                          color: priorityColor,
+                          background: `${priorityColor}12`,
+                          border: `1px solid ${priorityColor}30`,
+                          padding: '3px 8px',
+                        }}>
+                          {task.priority}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 0' }}>
+                        <span style={{
+                          ...mono, fontSize: 11, color: C.red,
+                          display: 'flex', alignItems: 'center', gap: 4, fontWeight: 700,
+                        }}>
+                          <Clock size={11} />
+                          {formatDate(task.due_date ? String(task.due_date) : null)}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
