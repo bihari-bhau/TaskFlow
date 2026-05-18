@@ -129,6 +129,7 @@ def seed():
             ProjectMember(project_id=vindex.id, user_id=shahnawaz.id,  role=RoleEnum.member),
 
             # Leviathan — Team Epsilon (Shreya HR as admin + 3 members)
+            ProjectMember(project_id=leviathan.id, user_id=admin.id,     role=RoleEnum.admin),
             ProjectMember(project_id=leviathan.id, user_id=shreya_hr.id, role=RoleEnum.admin),
             ProjectMember(project_id=leviathan.id, user_id=kanak.id,     role=RoleEnum.member),
             ProjectMember(project_id=leviathan.id, user_id=shivani.id,   role=RoleEnum.member),
