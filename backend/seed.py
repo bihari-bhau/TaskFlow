@@ -29,7 +29,10 @@ def seed():
         # ── Users ─────────────────────────────────────────────────────────────
         print("Creating users...")
 
-        admin    = User(name="Suryansh Raj",        email="admin@taskflow.io",      hashed_password=hash_password("admin123"))
+        admin    = User(name="Shubham Singh",        email="admin@taskflow.io",      hashed_password=hash_password("admin123"))
+
+        # HR
+        shreya_hr= User(name="Shreya Sharma",        email="shreya.hr@taskflow.io",  hashed_password=hash_password("shreya123"))
 
         # Team Alpha → Talos
         ankit    = User(name="Ankit Sharma",         email="ankit@taskflow.io",      hashed_password=hash_password("ankit123"))
@@ -57,12 +60,18 @@ def seed():
         mayank   = User(name="Mayank Chauhan",       email="mayank@taskflow.io",     hashed_password=hash_password("mayank123"))
         shahnawaz= User(name="Md Shahnawaz Akhtar",  email="shahnawaz@taskflow.io",  hashed_password=hash_password("shahnawaz123"))
 
+        # Team Epsilon → Leviathan
+        kanak    = User(name="Kanak Yadav",          email="kanak@taskflow.io",      hashed_password=hash_password("kanak123"))
+        shivani  = User(name="Shivani",              email="shivani@taskflow.io",    hashed_password=hash_password("shivani123"))
+        navreet  = User(name="Navreet Kaur",         email="navreet@taskflow.io",    hashed_password=hash_password("navreet123"))
+
         all_users = [
-            admin,
+            admin, shreya_hr,
             ankit, satyendra, saumya, manu, shivansh,
             sumit, priya, sneha, rahul, shreyansh,
             dhananjay, vaibhav, shreya, gaurav,
             yash, madhwan, mayank, shahnawaz,
+            kanak, shivani, navreet,
         ]
         for u in all_users:
             db.add(u)
@@ -73,15 +82,16 @@ def seed():
         # ── Projects ──────────────────────────────────────────────────────────
         print("Creating projects...")
 
-        talos  = Project(name="Talos",  description="AI-powered analytics platform for real-time data processing and insights generation.", created_by=admin.id)
-        valor  = Project(name="Valor",  description="Next-gen mobile banking application with biometric authentication and smart budgeting.", created_by=admin.id)
-        atlas  = Project(name="Atlas",  description="Cloud infrastructure management dashboard for multi-cloud deployments.", created_by=admin.id)
-        vindex = Project(name="Vindex", description="Enterprise search engine with NLP-powered semantic search and document indexing.", created_by=admin.id)
+        talos    = Project(name="Talos",     description="AI-powered analytics platform for real-time data processing and insights generation.", created_by=admin.id)
+        valor    = Project(name="Valor",     description="Next-gen mobile banking application with biometric authentication and smart budgeting.", created_by=admin.id)
+        atlas    = Project(name="Atlas",     description="Cloud infrastructure management dashboard for multi-cloud deployments.", created_by=admin.id)
+        vindex   = Project(name="Vindex",    description="Enterprise search engine with NLP-powered semantic search and document indexing.", created_by=admin.id)
+        leviathan= Project(name="Leviathan", description="HR operations platform for onboarding, payroll automation, and employee lifecycle management.", created_by=shreya_hr.id)
 
-        for p in [talos, valor, atlas, vindex]:
+        for p in [talos, valor, atlas, vindex, leviathan]:
             db.add(p)
         db.commit()
-        for p in [talos, valor, atlas, vindex]:
+        for p in [talos, valor, atlas, vindex, leviathan]:
             db.refresh(p)
 
         # ── Project Members ───────────────────────────────────────────────────
@@ -117,6 +127,12 @@ def seed():
             ProjectMember(project_id=vindex.id, user_id=madhwan.id,    role=RoleEnum.member),
             ProjectMember(project_id=vindex.id, user_id=mayank.id,     role=RoleEnum.member),
             ProjectMember(project_id=vindex.id, user_id=shahnawaz.id,  role=RoleEnum.member),
+
+            # Leviathan — Team Epsilon (Shreya HR as admin + 3 members)
+            ProjectMember(project_id=leviathan.id, user_id=shreya_hr.id, role=RoleEnum.admin),
+            ProjectMember(project_id=leviathan.id, user_id=kanak.id,     role=RoleEnum.member),
+            ProjectMember(project_id=leviathan.id, user_id=shivani.id,   role=RoleEnum.member),
+            ProjectMember(project_id=leviathan.id, user_id=navreet.id,   role=RoleEnum.member),
         ]
         for m in memberships:
             db.add(m)
@@ -243,6 +259,37 @@ def seed():
                  priority=PriorityEnum.medium, status=StatusEnum.todo,
                  due_date=now + timedelta(days=30),
                  project_id=vindex.id, assigned_to=shahnawaz.id, created_by=admin.id),
+
+            # ── Leviathan (Team Epsilon) ─────────────────────────────────────
+            Task(title="Build employee onboarding portal",
+                 description="Self-service portal for new hire document submission and orientation scheduling",
+                 priority=PriorityEnum.high,   status=StatusEnum.in_progress,
+                 due_date=now + timedelta(days=6),
+                 project_id=leviathan.id, assigned_to=kanak.id,   created_by=shreya_hr.id),
+
+            Task(title="Design payroll automation workflow",
+                 description="Automate monthly payroll processing with tax deduction rules",
+                 priority=PriorityEnum.high,   status=StatusEnum.todo,
+                 due_date=now + timedelta(days=10),
+                 project_id=leviathan.id, assigned_to=shivani.id, created_by=shreya_hr.id),
+
+            Task(title="Implement leave management system",
+                 description="Track leave balances, approvals, and holiday calendars across teams",
+                 priority=PriorityEnum.medium, status=StatusEnum.todo,
+                 due_date=now + timedelta(days=15),
+                 project_id=leviathan.id, assigned_to=navreet.id, created_by=shreya_hr.id),
+
+            Task(title="Create performance review templates",
+                 description="Quarterly and annual appraisal forms with 360-degree feedback",
+                 priority=PriorityEnum.medium, status=StatusEnum.todo,
+                 due_date=now - timedelta(days=2),   # overdue
+                 project_id=leviathan.id, assigned_to=kanak.id,   created_by=shreya_hr.id),
+
+            Task(title="HR policy documentation update",
+                 description="Revise and publish updated HR handbook for FY 2026-27",
+                 priority=PriorityEnum.low,    status=StatusEnum.todo,
+                 due_date=now + timedelta(days=20),
+                 project_id=leviathan.id, assigned_to=shivani.id, created_by=shreya_hr.id),
         ]
 
         for t in tasks:
@@ -257,32 +304,36 @@ def seed():
         print(f"\n  {'Email':<35} {'Password':<15} {'Team'}")
         print(f"  {'-'*60}")
         print(f"  {'admin@taskflow.io':<35} {'admin123':<15} ADMIN (all projects)")
+        print(f"  {'shreya.hr@taskflow.io':<35} {'shreya123':<15} HR — Leviathan (admin)")
         print(f"  {'-'*60}")
         rows = [
-            ("ankit@taskflow.io",     "ankit123",     "Talos"),
-            ("satyendra@taskflow.io", "satyendra123", "Talos"),
-            ("saumya@taskflow.io",    "saumya123",    "Talos"),
-            ("manu@taskflow.io",      "manu123",      "Talos"),
-            ("shivansh@taskflow.io",  "shivansh123",  "Talos"),
-            ("sumit@taskflow.io",     "sumit123",     "Valor"),
-            ("priya@taskflow.io",     "priya123",     "Valor"),
-            ("sneha@taskflow.io",     "sneha123",     "Valor"),
-            ("rahul@taskflow.io",     "rahul123",     "Valor"),
-            ("shreyansh@taskflow.io", "shreyansh123", "Valor"),
-            ("dhananjay@taskflow.io", "dhananjay123", "Atlas"),
-            ("vaibhav@taskflow.io",   "vaibhav123",   "Atlas"),
-            ("shreya@taskflow.io",    "shreya123",    "Atlas"),
-            ("gaurav@taskflow.io",    "gaurav123",    "Atlas"),
-            ("yash@taskflow.io",      "yash123",      "Vindex"),
-            ("madhwan@taskflow.io",   "madhwan123",   "Vindex"),
-            ("mayank@taskflow.io",    "mayank123",    "Vindex"),
-            ("shahnawaz@taskflow.io", "shahnawaz123", "Vindex"),
+            ("ankit@taskflow.io",      "ankit123",      "Talos"),
+            ("satyendra@taskflow.io",  "satyendra123",  "Talos"),
+            ("saumya@taskflow.io",     "saumya123",     "Talos"),
+            ("manu@taskflow.io",       "manu123",       "Talos"),
+            ("shivansh@taskflow.io",   "shivansh123",   "Talos"),
+            ("sumit@taskflow.io",      "sumit123",      "Valor"),
+            ("priya@taskflow.io",      "priya123",      "Valor"),
+            ("sneha@taskflow.io",      "sneha123",      "Valor"),
+            ("rahul@taskflow.io",      "rahul123",      "Valor"),
+            ("shreyansh@taskflow.io",  "shreyansh123",  "Valor"),
+            ("dhananjay@taskflow.io",  "dhananjay123",  "Atlas"),
+            ("vaibhav@taskflow.io",    "vaibhav123",    "Atlas"),
+            ("shreya@taskflow.io",     "shreya123",     "Atlas"),
+            ("gaurav@taskflow.io",     "gaurav123",     "Atlas"),
+            ("yash@taskflow.io",       "yash123",       "Vindex"),
+            ("madhwan@taskflow.io",    "madhwan123",    "Vindex"),
+            ("mayank@taskflow.io",     "mayank123",     "Vindex"),
+            ("shahnawaz@taskflow.io",  "shahnawaz123",  "Vindex"),
+            ("kanak@taskflow.io",      "kanak123",      "Leviathan"),
+            ("shivani@taskflow.io",    "shivani123",    "Leviathan"),
+            ("navreet@taskflow.io",    "navreet123",    "Leviathan"),
         ]
         for email, pwd, team in rows:
             print(f"  {email:<35} {pwd:<15} {team}")
         print()
-        print(f"  Projects : 4  (Talos, Valor, Atlas, Vindex)")
-        print(f"  Members  : 19 (1 admin + 18 members)")
+        print(f"  Projects : 5  (Talos, Valor, Atlas, Vindex, Leviathan)")
+        print(f"  Members  : 23 (1 admin + 1 HR + 21 members)")
         print(f"  Tasks    : {len(tasks)}")
         print("=" * 60)
 
