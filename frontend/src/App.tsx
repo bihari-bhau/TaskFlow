@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './AuthContext';
+import { ThemeProvider } from './ThemeContext';
 import Layout from './components/Layout';
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
@@ -9,18 +10,18 @@ import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import MembersPage from './pages/MembersPage';
 import PendingTasksPage from './pages/PendingTasksPage';
+import ChatPage from './pages/ChatPage';
+import DMPage from './pages/DMPage';
+import SettingsPage from './pages/SettingsPage';
+import LocationsPage from './pages/LocationsPage';
 
-// Full-screen spinner shown while localStorage is being read
 const SplashScreen = () => (
   <div style={{
     height: '100vh', display: 'flex',
     alignItems: 'center', justifyContent: 'center',
-    background: 'var(--bg)', flexDirection: 'column', gap: 16
+    background: 'var(--bg)', flexDirection: 'column', gap: 16,
   }}>
-    <div style={{
-      background: 'var(--accent)', borderRadius: 12,
-      padding: 12, display: 'flex'
-    }}>
+    <div style={{ background: 'var(--accent)', borderRadius: 12, padding: 12, display: 'flex' }}>
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
         stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polygon points="12 2 2 7 12 12 22 7 12 2"/>
@@ -45,50 +46,48 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return isAuthenticated ? <Navigate to="/" replace /> : <>{children}</>;
 };
 
+const wrap = (Page: React.ReactNode) => (
+  <PrivateRoute><Layout>{Page}</Layout></PrivateRoute>
+);
+
 const AppRoutes = () => (
   <Routes>
-    <Route path="/login" element={<PublicRoute><AuthPage /></PublicRoute>} />
-
-    <Route path="/" element={
-      <PrivateRoute><Layout><Dashboard /></Layout></PrivateRoute>
-    } />
-    <Route path="/projects" element={
-      <PrivateRoute><Layout><ProjectsPage /></Layout></PrivateRoute>
-    } />
-    <Route path="/projects/:id" element={
-      <PrivateRoute><Layout><ProjectDetailPage /></Layout></PrivateRoute>
-    } />
-    <Route path="/members" element={
-      <PrivateRoute><Layout><MembersPage /></Layout></PrivateRoute>
-    } />
-    <Route path="/pending" element={
-      <PrivateRoute><Layout><PendingTasksPage /></Layout></PrivateRoute>
-    } />
-
-    <Route path="*" element={<Navigate to="/" replace />} />
+    <Route path="/login"        element={<PublicRoute><AuthPage /></PublicRoute>} />
+    <Route path="/"             element={wrap(<Dashboard />)} />
+    <Route path="/projects"     element={wrap(<ProjectsPage />)} />
+    <Route path="/projects/:id" element={wrap(<ProjectDetailPage />)} />
+    <Route path="/members"      element={wrap(<MembersPage />)} />
+    <Route path="/pending"      element={wrap(<PendingTasksPage />)} />
+    <Route path="/chat"         element={wrap(<ChatPage />)} />
+    <Route path="/dms"          element={wrap(<DMPage />)} />
+    <Route path="/settings"     element={wrap(<SettingsPage />)} />
+    <Route path="/locations"    element={wrap(<LocationsPage />)} />
+    <Route path="*"             element={<Navigate to="/" replace />} />
   </Routes>
 );
 
 const App = () => (
-  <AuthProvider>
-    <BrowserRouter>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: {
-            background: 'var(--bg3)',
-            color: 'var(--text)',
-            border: '1px solid var(--border)',
-            fontFamily: 'Inter, sans-serif',
-            fontSize: 14,
-          },
-          success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
-          error:   { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
-        }}
-      />
-      <AppRoutes />
-    </BrowserRouter>
-  </AuthProvider>
+  <ThemeProvider>
+    <AuthProvider>
+      <BrowserRouter>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: 'var(--bg3)',
+              color: 'var(--text)',
+              border: '1px solid var(--border)',
+              fontFamily: 'Inter, sans-serif',
+              fontSize: 14,
+            },
+            success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
+            error:   { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
+          }}
+        />
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
+  </ThemeProvider>
 );
 
 export default App;
