@@ -1,25 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Mono:wght@400;500;700&family=Archivo+Black&display=swap');
 
 /* ── App theme (warm light) ─────────────────────────────────────────────────── */
-:root {
-  --bg:      #f5f3ef;
+[data-theme="light"] {
+  --bg:      #f5f3ef;   /* warm white instead of cold #f4f4f8 */
   --bg2:     #ffffff;
-  --bg3:     #eeebe5;
+  --bg3:     #eeebe5;   /* warm instead of #eeeef4 */
   --bg4:     #e5e0d8;
-  --border:  #dbd6cc;
+  --border:  #dbd6cc;   /* warm instead of #e2e2ea */
   --border2: #c4bdb0;
-  --text:    #1a1207;
+  --text:    #1a1207;   /* warm ink instead of #111118 */
   --text2:   #5a4a35;
   --text3:   #9a8268;
-  --accent:  #b94b10;
+  --accent:  #b94b10;   /* copper instead of indigo */
   --accent2: #d4601a;
   --green:   #2d6a2d;
   --yellow:  #c97d0a;
   --red:     #991111;
   --blue:    #1a3a6b;
-  --radius:  8px;
-  --radius-lg: 12px;
-  --shadow:  0 2px 16px rgba(26,18,7,0.10);
+  --shadow:  0 4px 24px rgba(26,18,7,0.10);
+  --chat-me: #b94b10;
+  --chat-other: #eeebe5;
+  --chat-me-text: #fff;
+  --chat-other-text: #1a1207;
+  --scrollbar: #c4bdb0;
 }
 
 /* ── Auth page — restore dark theme ─────────────────────────────────────────── */
