@@ -20,7 +20,12 @@ class StatusEnum(str, enum.Enum):
     todo = "todo"
     in_progress = "in_progress"
     done = "done"
-
+    
+    class AttendanceStatus(str, enum.Enum):
+    present  = "present"
+    late     = "late"
+    half_day = "half_day"
+    absent   = "absent"
 
 class User(Base):
     __tablename__ = "users"
@@ -81,3 +86,18 @@ class Task(Base):
     project = relationship("Project", back_populates="tasks")
     assignee = relationship("User", foreign_keys=[assigned_to], back_populates="assigned_tasks")
     creator = relationship("User", foreign_keys=[created_by], back_populates="created_tasks")
+    
+class Attendance(Base):
+    __tablename__ = "attendance"
+ 
+    id             = Column(Integer, primary_key=True, index=True)
+    user_id        = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    date           = Column(Date, nullable=False)                              # one record per user per day
+    status         = Column(Enum(AttendanceStatus), default=AttendanceStatus.present, nullable=False)
+    checked_in_at  = Column(DateTime(timezone=True), nullable=True)
+    checked_out_at = Column(DateTime(timezone=True), nullable=True)
+    notes          = Column(Text, nullable=True)
+    created_at     = Column(DateTime(timezone=True), server_default=func.now())
+ 
+    user = relationship("User", back_populates="attendance_records")
+    user.attendance_records = relationship("Attendance", back_populates="user", cascade="all, delete-orphan")

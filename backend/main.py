@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
-from routers import auth, projects, tasks, dashboard
+from routers import auth, projects, tasks, dashboard, attendance
 
 Base.metadata.create_all(bind=engine)
 
@@ -24,7 +24,7 @@ app.include_router(auth.router,      prefix="/api/auth",      tags=["Authenticat
 app.include_router(projects.router,  prefix="/api/projects",  tags=["Projects"])
 app.include_router(tasks.router,     prefix="/api/tasks",     tags=["Tasks"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
-
+app.include_router(attendance.router, prefix="/api/attendance", tags=["Attendance"])
 
 @app.get("/", tags=["Health"])
 def root():
